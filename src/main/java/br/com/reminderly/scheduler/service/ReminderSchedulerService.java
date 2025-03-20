@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 
+import static br.com.reminderly.scheduler.enums.RedisKeys.REMINDER_HISTORY_KEY;
+import static br.com.reminderly.scheduler.enums.RedisKeys.SCHEDULED_REMINDER_KEY;
+
 @Service
 @RequiredArgsConstructor
 public class ReminderSchedulerService {
@@ -25,7 +28,7 @@ public class ReminderSchedulerService {
     private final ObjectMapper objectMapper;
 
     private static final String SERVICE_ACTION_LOG = "Schedule reminder";
-    private static final String REMINDER_KEY = "reminder:";
+
 
     public ReminderRecordDto execute(ReminderRecordDto reminderRecordDto) {
 
@@ -33,7 +36,8 @@ public class ReminderSchedulerService {
 
             logger.info(LogMessage.SERVICE_PROCESS_START.getMessage(SERVICE_ACTION_LOG));
 
-            String reminderKey = REMINDER_KEY + reminderRecordDto.id();
+            String scheduledReminderKey = SCHEDULED_REMINDER_KEY.getMessage() + reminderRecordDto.id();
+            String reminderHistoryKey = REMINDER_HISTORY_KEY.getMessage() + reminderRecordDto.id();
             String reminderJson;
 
             long ttlSeconds = Duration.between(Instant.now(), reminderRecordDto.reminderTime()).getSeconds();
@@ -46,7 +50,8 @@ public class ReminderSchedulerService {
                     throw new ReminderSerializationException(LogMessage.ERROR_SERIALIZING_REMINDER.getMessage(reminderRecordDto.id()));
                 }
 
-                redisTemplate.opsForValue().set(reminderKey, reminderJson, Duration.ofSeconds(ttlSeconds));
+                redisTemplate.opsForValue().set(scheduledReminderKey, reminderJson, Duration.ofSeconds(ttlSeconds));
+                redisTemplate.opsForValue().set(reminderHistoryKey, reminderJson);
 
             } else {
                 throw new ReminderOverdueException(LogMessage.ERROR_REMINDER_OVERDUE.getMessage());

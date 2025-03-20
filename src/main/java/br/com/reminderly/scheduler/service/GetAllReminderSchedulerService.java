@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Set;
 
+import static br.com.reminderly.scheduler.enums.RedisKeys.SCHEDULED_REMINDER_PATTERN;
+
 @Service
 @RequiredArgsConstructor
 public class GetAllReminderSchedulerService {
@@ -25,7 +27,6 @@ public class GetAllReminderSchedulerService {
     private final ObjectMapper objectMapper;
 
     private static final String SERVICE_ACTION_LOG = "Get Reminders";
-    private static final String REMINDER_PATTERN = "reminder:*";
 
     public List<ReminderRecordDto> execute() {
 
@@ -33,7 +34,7 @@ public class GetAllReminderSchedulerService {
 
             logger.info(LogMessage.SERVICE_PROCESS_START.getMessage(SERVICE_ACTION_LOG));
 
-            Set<String> keys = redisTemplate.keys(REMINDER_PATTERN);
+            Set<String> keys = redisTemplate.keys(SCHEDULED_REMINDER_PATTERN.getMessage());
 
             if (keys.isEmpty()) {
                 throw new ReminderNotFoundException(LogMessage.REMINDERS_NOT_FOUND.getMessage());
